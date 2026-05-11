@@ -1,11 +1,11 @@
-#!/usr/bin/env node
-
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import express from "express";
+import cors from "cors";
 import axios from "axios";
 import dotenv from "dotenv";
 
@@ -165,13 +165,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
-async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error("Fleetio MCP Server running on stdio");
-}
+// Express App Setup
+const app = express();
+app.use(cors());
 
-main().catch((error) => {
-  console.error("Server error:", error);
-  process.exit(1);
+let transport: SSEServerTransport | null = null;
+
+app.get("/sse", async (req, res) => {
+  transport = new SSEServerTransport("/messages", res);
+  await server.connect(transport);
+  console.log("New SSE Connection established");
+});
+
+app.post("/messages", express.json(), async (req, res) => {
+  if (transport) {
+    await transport.handlePostMessage(req, res);
+  } else {
+    res.status(400).send("No active SSE connection");
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Fleetio MCP Server running via SSE on port ${PORT}`);
+  console.log(`Connect your LLM to: http://localhost:${PORT}/sse`);
 });
