@@ -177,6 +177,11 @@ app.use(cors());
 
 app.get("/sse", async (req, res) => {
   try {
+    // Prevent Hostinger/Nginx/LiteSpeed from buffering the SSE stream
+    res.setHeader("X-Accel-Buffering", "no");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
     const transport = new SSEServerTransport("/messages", res);
     
     // In @modelcontextprotocol/sdk, SSEServerTransport has a sessionId property.

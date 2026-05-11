@@ -163,6 +163,10 @@ const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
 app.get("/sse", async (req, res) => {
     try {
+        // Prevent Hostinger/Nginx/LiteSpeed from buffering the SSE stream
+        res.setHeader("X-Accel-Buffering", "no");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Connection", "keep-alive");
         const transport = new sse_js_1.SSEServerTransport("/messages", res);
         // In @modelcontextprotocol/sdk, SSEServerTransport has a sessionId property.
         // If your version uses a different property name, ensure this is correct.
