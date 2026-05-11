@@ -181,7 +181,7 @@ app.get("/sse", async (req, res) => {
         res.status(500).send("Internal Server Error");
     }
 });
-app.post("/messages", express_1.default.json(), async (req, res) => {
+app.post("/messages", async (req, res) => {
     const sessionId = req.query.sessionId;
     const transport = transports.get(sessionId);
     if (transport) {
